@@ -13,8 +13,8 @@ html_layout = """
             <header>
               <div class="nav-wrapper">
                 <a href="/">
-                    <img src="/static/img/logo.png" class="logo" />
-                    <h1>Plotly Dash Flask Tutorial</h1>
+                    <img src="/static/img/plane.png" class="logo" />
+                    <h1>Live Airport Obs</h1>
                   </a>
                 <nav>
                 </nav>
