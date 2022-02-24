@@ -8,7 +8,7 @@ import pandas as pd
 
 from .data import create_dataframe
 from .layout import html_layout
-
+import plotly.express as px
 
 def init_dashboard(server):
     """Create a Plotly Dash dashboard."""
@@ -28,28 +28,24 @@ def init_dashboard(server):
     dash_app.index_string = html_layout
 
     # Create Layout
+    s=60
+    fig = px.scatter_mapbox(df, lat="Latitude", lon="Longitude", hover_name='Name',
+                        hover_data=['Location'],
+                        #color='Latitude',
+                        zoom=0, height=20*s
+                        #width=16*s
+                        #range_color=[-90,90],
+                        #color_discrete_sequence=["green", "blue", "goldenrod", "magenta"]
+                       )
+    fig.update_layout(mapbox_style="open-street-map")
+    fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    
     dash_app.layout = html.Div(
         children=[
             dcc.Graph(
                 id="histogram-graph",
-                figure={
-                    "data": [
-                        {
-                            "x": df["complaint_type"],
-                            "text": df["complaint_type"],
-                            "customdata": df["key"],
-                            "name": "311 Calls by region.",
-                            "type": "histogram",
-                        }
-                    ],
-                    "layout": {
-                        "title": "NYC 311 Calls category.",
-                        "height": 500,
-                        "padding": 150,
-                    },
-                },
-            ),
-            create_data_table(df),
+                figure=fig),
+            #create_data_table(df),
         ],
         id="dash-container",
     )
