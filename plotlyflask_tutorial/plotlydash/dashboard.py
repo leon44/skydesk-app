@@ -3,6 +3,8 @@ import dash
 from dash import dcc
 from dash import html
 from dash import dash_table
+from dash import Input
+from dash import Output
 import numpy as np
 import pandas as pd
 
@@ -27,28 +29,35 @@ def init_dashboard(server):
     # Custom HTML layout
     dash_app.index_string = html_layout
 
-    # Create Layout
-    s=60
+    # Generate figure
     fig = px.scatter_mapbox(df, lat="lat", lon="lon", hover_name='name',
                         hover_data=['id'],
-                        #color='Latitude',
-                        zoom=0, height=20*s
-                        #width=16*s
-                        #range_color=[-90,90],
-                        #color_discrete_sequence=["green", "blue", "goldenrod", "magenta"]
+                        zoom=0, height=20*60,
+                        color_discrete_sequence=["green", "blue", "goldenrod", "magenta"]
                        )
     fig.update_layout(mapbox_style="open-street-map")
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    
+
+    # Create Layout
     dash_app.layout = html.Div(
         children=[
             dcc.Graph(
                 id="histogram-graph",
                 figure=fig),
             #create_data_table(df),
-        ],
-        id="dash-container",
+            input_box(df),
+            ],
+            id="dash-container",
     )
+
+    @dash_app.callback(
+        Output(component_id='my-output', component_property='children'),
+        Input(component_id='my-input', component_property='value')
+    )
+    def update_output_div(input_value):
+        output_value = float(input_value)+5.0
+        return f'Output: {output_value}'
+
     return dash_app.server
 
 
@@ -63,3 +72,15 @@ def create_data_table(df):
         page_size=300,
     )
     return table
+
+def input_box(df):
+    box = html.Div([
+        html.H6("Change the value in the text box to add 5 to it!"),
+        html.Div([
+            "Input: ",
+            dcc.Input(id='my-input', value='25', type='text')
+        ]),
+        html.Br(),
+        html.Div(id='my-output'),
+    ])
+    return box
