@@ -29,8 +29,8 @@ def init_dashboard(server):
 
     # Create Layout
     s=60
-    fig = px.scatter_mapbox(df, lat="Latitude", lon="Longitude", hover_name='Name',
-                        hover_data=['Location'],
+    fig = px.scatter_mapbox(df, lat="lat", lon="lon", hover_name='name',
+                        hover_data=['id'],
                         #color='Latitude',
                         zoom=0, height=20*s
                         #width=16*s

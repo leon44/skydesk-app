@@ -4,11 +4,7 @@ import pandas as pd
 
 
 def create_dataframe():
-    """Create Pandas DataFrame from local CSV."""
-    df = pd.read_csv("data/metar.csv")
-    #df["created"] = df["created"].dt.date
-    #df.drop(columns=["incident_zip"], inplace=True)
-    #num_complaints = df["complaint_type"].value_counts()
-    #to_remove = num_complaints[num_complaints <= 30].index
-    #df.replace(to_remove, np.nan, inplace=True)
+    """Create Pandas DataFrame from local file."""
+    headings = ['id', 'lat', 'lon', 'ele','0','name','type','wmo']
+    df = pd.read_fwf('data/ghcnd-stations.txt', names=headings, infer_nrows=26000)
     return df

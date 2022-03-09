@@ -13,8 +13,8 @@ html_layout = """
             <header>
               <div class="nav-wrapper">
                 <a href="/">
-                    <img src="/static/img/plane.png" class="logo" />
-                    <h1>Live Airport Obs</h1>
+                    <img src="/static/img/sock.svg" class="logo" />
+                    <h1>Measurement archive</h1>
                   </a>
                 <nav>
                 </nav>
