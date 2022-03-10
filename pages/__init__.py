@@ -1,9 +1,6 @@
 """Initialize Flask app."""
-#from ddtrace import patch_all
 from flask import Flask
 from flask_assets import Environment
-
-#patch_all()
 
 
 def init_app():
@@ -19,8 +16,10 @@ def init_app():
         from .assets import compile_static_assets
 
         # Import Dash application
-        from .plotlydash.dashboard import init_dashboard
+        from .archive.dashboard import init_dashboard
+        app = init_dashboard(app)
 
+        from .climatecheck.dashboard import init_dashboard
         app = init_dashboard(app)
 
         # Compile static assets

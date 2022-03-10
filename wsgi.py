@@ -1,5 +1,5 @@
 """Application entry point."""
-from plotlyflask_tutorial import init_app
+from pages import init_app
 
 app = init_app()
 
