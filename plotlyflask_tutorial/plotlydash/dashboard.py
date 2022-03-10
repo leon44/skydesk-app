@@ -31,7 +31,7 @@ def init_dashboard(server):
 
     # Generate figure
     fig = px.scatter_mapbox(df, lat="lat", lon="lon", hover_name='name',
-                        hover_data=['id'],
+                        hover_data=['id', 'start', 'end'],
                         zoom=0, height=20*60,
                         color_discrete_sequence=["green", "blue", "goldenrod", "magenta"]
                        )

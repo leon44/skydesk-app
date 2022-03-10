@@ -5,5 +5,5 @@ import pandas as pd
 
 def create_dataframe():
     """Create Pandas DataFrame from local file."""
-    df = pd.read_feather('data/ghcnd-stations.feather')
+    df = pd.read_feather('data/ghcnd-tmax.feather')
     return df
