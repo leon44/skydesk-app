@@ -5,6 +5,7 @@ from dash import html
 from dash import dash_table
 from dash import Input
 from dash import Output
+#import json
 import numpy as np
 import pandas as pd
 
@@ -32,55 +33,53 @@ def init_dashboard(server):
     # Generate figure
     fig = px.scatter_mapbox(df, lat="lat", lon="lon", hover_name='name',
                         hover_data=['id', 'start', 'end'],
-                        zoom=0, height=20*60,
-                        color_discrete_sequence=["green", "blue", "goldenrod", "magenta"]
+                        zoom=3, height=20*60,
+                        color_discrete_sequence=["orange", "blue", "goldenrod", "magenta"]
                        )
-    fig.update_layout(mapbox_style="open-street-map")
+    fig.update_layout(
+        mapbox_style="white-bg",
+        mapbox_layers=[
+            {
+                "below": 'traces',
+                "sourcetype": "raster",
+                "sourceattribution": "United States Geological Survey",
+                "source": [
+                    "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}"
+                ]
+            }
+        ])
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 
     # Create Layout
     dash_app.layout = html.Div(
         children=[
+            selector(df),
             dcc.Graph(
-                id="histogram-graph",
+                id="map",
                 figure=fig),
-            #create_data_table(df),
-            input_box(df),
             ],
             id="dash-container",
     )
 
     @dash_app.callback(
-        Output(component_id='my-output', component_property='children'),
-        Input(component_id='my-input', component_property='value')
-    )
-    def update_output_div(input_value):
-        output_value = float(input_value)+5.0
-        return f'Output: {output_value}'
+        Output('click-data', 'children'),
+        Input('map', 'clickData'))
+    def display_click_data(clickData):
+        if clickData == None:
+            txt = 'Select a point on the map to get started'
+        else:
+            statName = clickData['points'][0]['hovertext']
+            statID = clickData['points'][0]['customdata'][0]
+            dataUrl = f'https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/{statID}.csv'
+            txt = html.Div(children=[
+                f'you have selected {statName}, {statID} ',
+                    dcc.Link('Download raw data', href=dataUrl, target="_blank")])
+        return txt
 
     return dash_app.server
 
-
-def create_data_table(df):
-    """Create Dash datatable from Pandas DataFrame."""
-    table = dash_table.DataTable(
-        id="database-table",
-        columns=[{"name": i, "id": i} for i in df.columns],
-        data=df.to_dict("records"),
-        sort_action="native",
-        sort_mode="native",
-        page_size=300,
-    )
-    return table
-
-def input_box(df):
-    box = html.Div([
-        html.H6("Change the value in the text box to add 5 to it!"),
-        html.Div([
-            "Input: ",
-            dcc.Input(id='my-input', value='25', type='text')
-        ]),
-        html.Br(),
-        html.Div(id='my-output'),
+def selector(df):
+    sel = html.Div([
+        html.Pre(id='click-data'),
     ])
-    return box
+    return sel
