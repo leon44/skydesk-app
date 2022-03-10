@@ -9,7 +9,7 @@ from dash import Output
 import numpy as np
 import pandas as pd
 
-from .data import create_dataframe
+from .data import create_dataframe_all_ghcnd
 from .layout import html_layout
 import plotly.express as px
 
@@ -25,14 +25,14 @@ def init_dashboard(server):
     )
 
     # Load DataFrame
-    df = create_dataframe()
+    df = create_dataframe_all_ghcnd()
 
     # Custom HTML layout
     dash_app.index_string = html_layout
 
     # Generate figure
     fig = px.scatter_mapbox(df, lat="lat", lon="lon", hover_name='name',
-                        hover_data=['id', 'start', 'end'],
+                        hover_data=['id', 'start', 'end', 'param'],
                         zoom=3, height=20*60,
                         color_discrete_sequence=["orange", "blue", "goldenrod", "magenta"]
                        )
