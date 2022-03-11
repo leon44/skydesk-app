@@ -9,7 +9,8 @@ from dash import Output
 import numpy as np
 import pandas as pd
 
-from .data import create_dataframe_tmax
+from .data import create_df_tmax
+from .data import create_df_station
 from .layout import html_layout
 import plotly.express as px
 
@@ -25,7 +26,7 @@ def init_dashboard(server):
     )
 
     # Load DataFrame
-    df = create_dataframe_tmax()
+    df = create_df_tmax()
 
     # Custom HTML layout
     dash_app.index_string = html_layout
@@ -53,7 +54,7 @@ def init_dashboard(server):
     # Create Layout
     dash_app.layout = html.Div(
         children=[
-            selector(df),
+            selector(),
             dcc.Graph(
                 id="map",
                 figure=fig),
@@ -62,7 +63,7 @@ def init_dashboard(server):
     )
 
     @dash_app.callback(
-        Output('click-data', 'children'),
+        Output('selection-info', 'children'),
         Input('map', 'clickData'))
     def display_click_data(clickData):
         if clickData == None:
@@ -72,14 +73,41 @@ def init_dashboard(server):
             statID = clickData['points'][0]['customdata'][0]
             dataUrl = f'https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/{statID}.csv'
             txt = html.Div(children=[
-                f'you have selected {statName}, {statID} ',
-                    dcc.Link('Download raw data', href=dataUrl, target="_blank")])
+                f'You have selected {statName}, {statID} ',
+                    dcc.Link('Raw data', href=dataUrl, target="_blank")])
         return txt
+
+    @dash_app.callback(
+        dash.dependencies.Output('run-button', 'children'),
+        [dash.dependencies.Input('map', 'clickData')])
+        #[dash.dependencies.State('click-data', 'value')])
+    def update_output(clickData):
+        statName = clickData['points'][0]['hovertext']
+        txt = html.Div(children=[
+            html.Button(f'Run analysis for {statName}', id='run-anal')]),
+        return txt
+
+    @dash_app.callback(
+        dash.dependencies.Output('running', 'children'),
+        [dash.dependencies.Input('run-anal', 'n_clicks'),
+         dash.dependencies.Input('map', 'clickData')])
+    def update_output(n_clicks, clickData):
+        txt = ''
+        if n_clicks is not None:
+            statID = clickData['points'][0]['customdata'][0]
+            txt = f'now running for {statID}'
+            df = create_df_station(statID)
+            txt = f'{df.max()}'
+            return txt
 
     return dash_app.server
 
-def selector(df):
+def selector():
     sel = html.Div([
-        html.Pre(id='click-data'),
+        html.Pre(id='selection-info'),
+        html.Pre(id='run-button'),
+        #html.Pre(id='running'),
+        html.Pre(dcc.Loading(id='loading-1', type='default', children=html.Div(id="running"))),
+        html.Div(html.P([html.Br()]))
     ])
     return sel
