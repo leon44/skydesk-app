@@ -82,23 +82,26 @@ def init_dashboard(server):
         [dash.dependencies.Input('map', 'clickData')])
         #[dash.dependencies.State('click-data', 'value')])
     def update_output(clickData):
-        statName = clickData['points'][0]['hovertext']
-        txt = html.Div(children=[
-            html.Button(f'Run analysis for {statName}', id='run-anal')]),
+        txt = ''
+        if clickData is not None:
+            statName = clickData['points'][0]['hovertext']
+            txt = html.Div(children=[
+                html.Button(f'Run analysis for {statName}', id='run-anal')]),
         return txt
 
     @dash_app.callback(
-        dash.dependencies.Output('running', 'children'),
+        dash.dependencies.Output('heat-map', 'figure'),
         [dash.dependencies.Input('run-anal', 'n_clicks'),
          dash.dependencies.Input('map', 'clickData')])
     def update_output(n_clicks, clickData):
-        txt = ''
+        fig = 'soon'
         if n_clicks is not None:
             statID = clickData['points'][0]['customdata'][0]
             txt = f'now running for {statID}'
-            df = create_df_station(statID)
-            txt = f'{df.max()}'
-            return txt
+            dfFull = create_df_station(statID)
+            fig = heatMap(dfFull)
+            #txt = f'{df.max()}'
+        return fig
 
     return dash_app.server
 
@@ -106,8 +109,29 @@ def selector():
     sel = html.Div([
         html.Pre(id='selection-info'),
         html.Pre(id='run-button'),
-        #html.Pre(id='running'),
-        html.Pre(dcc.Loading(id='loading-1', type='default', children=html.Div(id="running"))),
+        html.Pre(dcc.Loading(id='loading-1', type='default', children=html.Div(dcc.Graph(
+                id="heat-map",
+                figure="heat-map"))),
+                             ),
         html.Div(html.P([html.Br()]))
     ])
     return sel
+
+def heatMap(dfFull):
+    dfH = dfFull.drop(dfFull[dfFull.index.year < 1980].index)
+    dfH = dfH.resample('M').mean()
+    # dfH = dfH.rolling(5).mean()
+    dfH['year'] = dfH.index.year
+    dfH['month'] = dfH.index.month
+    dfH = dfH.set_index('month')
+    dfH = dfH.set_index('year', append=True)
+    dfH = dfH.stack().unstack(level=0)
+    dfH = dfH.transpose()
+    dfH.columns = dfH.columns.droplevel(1)
+    fig = px.imshow(dfH, text_auto='.1f',
+                    labels=dict(x="Year", y="Month", color="Average Temp"),
+                    y=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    # x=list(range(1980,2020))
+                    )
+    fig = fig.show()
+    return fig
