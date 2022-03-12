@@ -11,6 +11,8 @@ import pandas as pd
 
 from .data import create_df_tmax
 from .data import create_df_station
+from .data import create_heat_map
+from .data import create_map
 from .layout import html_layout
 import plotly.express as px
 
@@ -31,33 +33,15 @@ def init_dashboard(server):
     # Custom HTML layout
     dash_app.index_string = html_layout
 
-    # Generate figure
-    fig = px.scatter_mapbox(df, lat="lat", lon="lon", hover_name='name',
-                        hover_data=['id', 'start', 'end'],
-                        zoom=3, height=20*60,
-                        color_discrete_sequence=["orange", "blue", "goldenrod", "magenta"]
-                       )
-    fig.update_layout(
-        mapbox_style="white-bg",
-        mapbox_layers=[
-            {
-                "below": 'traces',
-                "sourcetype": "raster",
-                "sourceattribution": "United States Geological Survey",
-                "source": [
-                    "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}"
-                ]
-            }
-        ])
-    fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-
     # Create Layout
     dash_app.layout = html.Div(
         children=[
             selector(),
+            heat_map_container(),
+            #line_chart_container(),
             dcc.Graph(
                 id="map",
-                figure=fig),
+                figure=create_map(df)),
             ],
             id="dash-container",
     )
@@ -94,14 +78,14 @@ def init_dashboard(server):
         [dash.dependencies.Input('run-anal', 'n_clicks'),
          dash.dependencies.Input('map', 'clickData')])
     def update_output(n_clicks, clickData):
-        fig = 'soon'
+        heatmap = 'soon'
         if n_clicks is not None:
             statID = clickData['points'][0]['customdata'][0]
             txt = f'now running for {statID}'
-            dfFull = create_df_station(statID)
-            fig = heatMap(dfFull)
+            dfFull, use = create_df_station(statID)
+            heatmap = create_heat_map(dfFull, use)
             #txt = f'{df.max()}'
-        return fig
+        return heatmap
 
     return dash_app.server
 
@@ -109,29 +93,24 @@ def selector():
     sel = html.Div([
         html.Pre(id='selection-info'),
         html.Pre(id='run-button'),
-        html.Pre(dcc.Loading(id='loading-1', type='default', children=html.Div(dcc.Graph(
-                id="heat-map",
-                figure="heat-map"))),
-                             ),
         html.Div(html.P([html.Br()]))
     ])
     return sel
 
-def heatMap(dfFull):
-    dfH = dfFull.drop(dfFull[dfFull.index.year < 1980].index)
-    dfH = dfH.resample('M').mean()
-    # dfH = dfH.rolling(5).mean()
-    dfH['year'] = dfH.index.year
-    dfH['month'] = dfH.index.month
-    dfH = dfH.set_index('month')
-    dfH = dfH.set_index('year', append=True)
-    dfH = dfH.stack().unstack(level=0)
-    dfH = dfH.transpose()
-    dfH.columns = dfH.columns.droplevel(1)
-    fig = px.imshow(dfH, text_auto='.1f',
-                    labels=dict(x="Year", y="Month", color="Average Temp"),
-                    y=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                    # x=list(range(1980,2020))
-                    )
-    fig = fig.show()
-    return fig
+def heat_map_container():
+    hmc = html.Div([
+        html.Pre(dcc.Loading(id='loading-1', type='default',
+                             children=html.Div(dcc.Graph(
+                                 id="heat-map",
+                                 figure="heat-map"))))
+             ])
+    return hmc
+
+def line_chart_container():
+    lcc = html.Div([
+        html.Pre(dcc.Loading(id='loading-2', type='default',
+                             children=html.Div(dcc.Graph(
+                                 id="line-chart",
+                                 figure="line-chart"))))
+             ])
+    return lcc
