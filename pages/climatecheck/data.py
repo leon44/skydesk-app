@@ -36,9 +36,9 @@ def create_df_station(statID):
     return dfFull, use
 
 def create_heat_map(dfFull, use, statName):
-    print(dfFull)
-    dfH = dfFull.drop(dfFull[dfFull.index.year < 1980].index)
-    dfH = dfH.resample('M').mean()
+    # 40yrs of data max
+    dfH = dfFull.resample('M').mean()
+    dfH = dfH.tail(480)
     # dfH = dfH.rolling(5).mean()
     dfH['year'] = dfH.index.year
     dfH['month'] = dfH.index.month
@@ -47,7 +47,7 @@ def create_heat_map(dfFull, use, statName):
     dfH = dfH.stack().unstack(level=0)
     dfH = dfH.transpose()
     dfH.columns = dfH.columns.droplevel(1)
-    fig = px.imshow(dfH, text_auto='.1f', title=f'Monthly average {use} at {statName}',
+    fig = px.imshow(dfH, text_auto='.1f', title=f'Monthly average {use} at {statName}, last 40 years',
                     labels=dict(x="Year", y="Month", color=f'Average {use}'),
                     y=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
                     )
@@ -57,13 +57,15 @@ def create_heat_map(dfFull, use, statName):
     return fig
 
 def create_line_chart(dfFull, use, statName):
+    # Create a yearly time series, interpolate gaps and applying 5y rolling avg
     dfG = dfFull.resample('Y').mean()
     dfRoll = dfG.interpolate(method = 'linear', limit=10).rolling(5).mean()
+    # Remove first and last years assuming incomplete
     dfRoll = dfRoll.iloc[1:-1, :]
+    # Plot
     fig = px.line(dfRoll, y=use, title=f'Five year rolling average {use} at {statName}')
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)',
                     plot_bgcolor='rgba(0,0,0,0)')
-    #fig.show()
     return fig
 
 def create_map(df):
