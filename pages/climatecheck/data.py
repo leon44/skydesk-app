@@ -9,27 +9,34 @@ def create_df_tmax():
     return df
 
 def create_df_station(statID):
-    df = pd.read_csv(f'https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/{statID}.csv',
+    try:
+        dfFull = pd.read_feather(f'data/cache/{statID}.feather')
+        dfFull.set_index('DATE', inplace=True)
+        use = dfFull.columns[0]
+
+    except FileNotFoundError:
+        df = pd.read_csv(f'https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/{statID}.csv',
                      index_col=['DATE'], parse_dates=['DATE'])
-    try:
-        tavgCount = df.TAVG.count()
-    except: tavgCount = 0
+        try:
+            tavgCount = df.TAVG.count()
+        except: tavgCount = 0
 
-    try:
-        tmaxCount = df.TMAX.count()
-    except: tmaxCount = 0
+        try:
+            tmaxCount = df.TMAX.count()
+        except: tmaxCount = 0
 
-    if tmaxCount > tavgCount:
-        use = 'TMAX'
-    else:
-        use = 'TAVG'
-
-    #To celcius
-    dfFull = df[[use]]/10
+        if tmaxCount > tavgCount:
+            use = 'TMAX'
+        else:
+            use = 'TAVG'
+        #To celcius
+        dfFull = df[[use]]/10
+        dfFull.reset_index().to_feather(f'data/cache/{statID}.feather')
 
     return dfFull, use
 
 def create_heat_map(dfFull, use, statName):
+    print(dfFull)
     dfH = dfFull.drop(dfFull[dfFull.index.year < 1980].index)
     dfH = dfH.resample('M').mean()
     # dfH = dfH.rolling(5).mean()
@@ -51,7 +58,7 @@ def create_heat_map(dfFull, use, statName):
 
 def create_line_chart(dfFull, use, statName):
     dfG = dfFull.resample('Y').mean()
-    dfRoll = dfG.rolling(5).mean()
+    dfRoll = dfG.interpolate(method = 'linear', limit=10).rolling(5).mean()
     fig = px.line(dfRoll, y=use, title=f'Five year rolling average {use} at {statName}')
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)',
                     plot_bgcolor='rgba(0,0,0,0)')
