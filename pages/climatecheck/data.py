@@ -59,6 +59,7 @@ def create_heat_map(dfFull, use, statName):
 def create_line_chart(dfFull, use, statName):
     dfG = dfFull.resample('Y').mean()
     dfRoll = dfG.interpolate(method = 'linear', limit=10).rolling(5).mean()
+    dfRoll = dfRoll.iloc[1:-1, :]
     fig = px.line(dfRoll, y=use, title=f'Five year rolling average {use} at {statName}')
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)',
                     plot_bgcolor='rgba(0,0,0,0)')
