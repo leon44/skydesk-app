@@ -1,3 +1,3 @@
 [label .gitignore]
 *.pyc
-data/cache/
+data/cache/*
