@@ -13,7 +13,6 @@ def create_df_station(statID):
         dfFull = pd.read_feather(f'data/cache/{statID}.feather')
         dfFull.set_index('DATE', inplace=True)
         use = dfFull.columns[0]
-
     except FileNotFoundError:
         df = pd.read_csv(f'https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/{statID}.csv',
                      index_col=['DATE'], parse_dates=['DATE'])
